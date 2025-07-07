@@ -424,18 +424,25 @@ class SimpleEnvironmentEditor(QMainWindow):
         
         # Get save location
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save ROS2 Map", "", "YAML files (*.yaml)"
+            self, "Save ROS2 Map", "my_map.yaml", "YAML files (*.yaml)"
         )
         
         if not file_path:
             return
         
+        # Ensure the file has .yaml extension
+        if not file_path.endswith('.yaml'):
+            file_path += '.yaml'
+        
         try:
             # Generate occupancy grid
             occupancy_grid = self.editor.get_occupancy_grid()
+            print(f"Generated occupancy grid: {occupancy_grid.shape}")
+            print(f"Grid values - Free: {np.sum(occupancy_grid == 0)}, Occupied: {np.sum(occupancy_grid == 100)}")
             
             # Create PGM filename
             pgm_path = file_path.replace('.yaml', '.pgm')
+            print(f"Saving files:\n  YAML: {file_path}\n  PGM: {pgm_path}")
             
             # Save PGM file (occupancy grid image)
             self._save_pgm(occupancy_grid, pgm_path)
@@ -457,31 +464,44 @@ class SimpleEnvironmentEditor(QMainWindow):
             with open(file_path, 'w') as f:
                 yaml.dump(map_data, f, default_flow_style=False)
             
+            print(f"YAML file saved: {file_path}")
+            
             QMessageBox.information(
                 self, "Success", 
-                f"Map saved successfully!\nYAML: {file_path}\nPGM: {pgm_path}"
+                f"Map saved successfully!\n\nFiles created:\n• {os.path.basename(file_path)}\n• {os.path.basename(pgm_path)}\n\nBoth files are ready for ROS2 Nav2!"
             )
             
             self.status_bar.showMessage(f"Map saved: {os.path.basename(file_path)}")
             
         except Exception as e:
+            print(f"Save error: {str(e)}")
             QMessageBox.critical(self, "Error", f"Failed to save map: {str(e)}")
     
     def _save_pgm(self, grid, file_path):
         """Save occupancy grid as PGM file."""
         height, width = grid.shape
         
-        # Convert to PGM format (0-255, where 255 is free, 0 is occupied)
+        # Convert to PGM format (0-255, where 254 is free, 0 is occupied)
         pgm_data = np.zeros_like(grid, dtype=np.uint8)
         pgm_data[grid == 0] = 254      # Free space -> white (254)
         pgm_data[grid == 100] = 0      # Occupied -> black (0)
         pgm_data[grid == -1] = 205     # Unknown -> gray (205)
         
-        with open(file_path, 'wb') as f:
-            # PGM header
-            f.write(f"P5\n{width} {height}\n255\n".encode())
-            # Write data
-            f.write(pgm_data.tobytes())
+        # Flip vertically to match ROS convention (origin at bottom-left)
+        pgm_data = np.flipud(pgm_data)
+        
+        try:
+            with open(file_path, 'wb') as f:
+                # PGM header
+                header = f"P5\n{width} {height}\n255\n"
+                f.write(header.encode('ascii'))
+                # Write data row by row
+                f.write(pgm_data.tobytes())
+            
+            print(f"PGM file saved: {file_path} ({width}x{height})")
+            
+        except Exception as e:
+            raise Exception(f"Failed to save PGM file: {str(e)}")
     
     def _update_obstacle_count(self):
         """Update obstacle count display."""

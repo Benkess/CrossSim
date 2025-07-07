@@ -4,36 +4,40 @@ A quick setup guide for the CrossSim interactive environment creation toolkit.
 
 ## Quick Start
 
-1. **Install the package in development mode:**
+1. **Check dependencies:**
    ```bash
    cd /home/benpkessler/CrossSim
-   pip install -e .
+   python3 check_dependencies.py
    ```
 
-2. **Test the installation:**
+2. **Test core functionality:**
    ```bash
-   python test_installation.py
+   python3 test_save_functionality.py
    ```
 
 3. **Launch the simple environment editor:**
    ```bash
-   # Option 1: Direct launch
-   python -m crosssim.gui.simple_editor
+   # Easy launch (recommended)
+   ./launch_simple_editor.sh
    
-   # Option 2: Using the installed script (after pip install)
-   crosssim-simple
-   
-   # Option 3: Through the main GUI with --simple flag
-   crosssim-gui --simple
+   # Or manual launch
+   PYTHONPATH=/home/benpkessler/CrossSim python3 crosssim/gui/simple_editor.py
    ```
+
+## Fixed Issues
+
+✅ **File Extension**: The save dialog now automatically adds `.yaml` extension if not provided  
+✅ **PGM File Creation**: Both YAML and PGM files are now properly created  
+✅ **ROS2 Compatibility**: Output files follow ROS2 Nav2 conventions exactly  
 
 ## Simple Environment Editor Features
 
 ### Current Features:
 - **Map Setup**: Configure map size, resolution, and origin
-- **Static Layer Editing**: Draw rectangular obstacles by clicking and dragging
+- **Static Layer Editing**: Draw rectangular obstacles by clicking and dragging  
 - **Interactive Editing**: Select, move, and delete obstacles
 - **ROS2 Nav2 Export**: Save maps in ROS2 Nav2 format (.yaml + .pgm files)
+- **Automatic File Extensions**: No need to manually add `.yaml` extension
 
 ### How to Use:
 
